@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.Composition.Hosting;
 using System.IO;
 using System.Web;
 using System.Web.Mvc;
@@ -30,21 +31,20 @@ namespace ExtensibleMvcApplication
 
         private static void BootstrapContainer()
         {
-            var container = new UnityContainer()
-                .Install(Registrator.ForControllers,
-                         Registrator.ForServices,
-                         Registrator.ForEnterpriseLibrary);
+            var unityControllerFactory = new UnityControllerFactory(
+                new UnityContainer() // No other direct reference on the container outside this method.
+                    .Install(Registrator.ForControllers,
+                             Registrator.ForServices,
+                             Registrator.ForEnterpriseLibrary));
 
-            var unityControllerFactory = new UnityControllerFactory(container);
+            string extensionsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Extensions");
 
             var composableControllerFactory = new ComposableControllerFactory(
-                catalogPath: Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Extensions"),
+                new CompositionContainer(new DirectoryCatalog(extensionsPath)),
                 defaultFactoryMethod: unityControllerFactory.CreateController
                 );
 
             ControllerBuilder.Current.SetControllerFactory(composableControllerFactory);
-
-            // That was it. No other direct reference on the container outside this method.
         }
 
         protected void Application_Start()
