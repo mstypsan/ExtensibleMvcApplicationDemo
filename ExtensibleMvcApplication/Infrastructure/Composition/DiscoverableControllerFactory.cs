@@ -7,17 +7,13 @@ using System.Web.Routing;
 
 namespace ExtensibleMvcApplication.Infrastructure.Composition
 {
-    internal sealed class ComposableControllerFactory : DefaultControllerFactory
+    internal sealed class DiscoverableControllerFactory : DefaultControllerFactory
     {
-        private CompositionContainer compositionContainer;
-        private Func<RequestContext, string, IController> defaultFactoryMethod;
+        private readonly CompositionContainer compositionContainer;
 
-        public ComposableControllerFactory(
-            CompositionContainer compositionContainer, 
-            Func<RequestContext, string, IController> defaultFactoryMethod)
+        public DiscoverableControllerFactory(CompositionContainer compositionContainer)
         {
             this.compositionContainer = compositionContainer;
-            this.defaultFactoryMethod = defaultFactoryMethod;
         }
 
         /// <summary>
@@ -40,28 +36,9 @@ namespace ExtensibleMvcApplication.Infrastructure.Composition
                 .GetExports<IController, IDictionary<string, object>>()
                 .Where(c => c.Metadata.ContainsKey("controllerName")
                          && c.Metadata["controllerName"].ToString() == controllerName)
-                .FirstOrDefault();
+                .First();
 
-            if (controller != null)
-            {
-                return controller.Value;
-            }
-
-            return this.defaultFactoryMethod.Invoke(requestContext, controllerName);
-        }
-
-        /// <summary>
-        /// Releases the specified controller.
-        /// </summary>
-        /// <param name="controller">The controller to release.</param>
-        public override void ReleaseController(IController controller)
-        {
-            IDisposable component = controller as IDisposable;
-
-            if (component != null)
-            {
-                component.Dispose();
-            }
+            return controller.Value;
         }
     }
 }

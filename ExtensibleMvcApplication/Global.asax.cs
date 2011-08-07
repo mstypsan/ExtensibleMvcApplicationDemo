@@ -31,20 +31,20 @@ namespace ExtensibleMvcApplication
 
         private static void BootstrapContainer()
         {
-            var unityControllerFactory = new UnityControllerFactory(
-                new UnityContainer() // No other direct reference on the container outside this method.
-                    .Install(Registrator.ForControllers,
-                             Registrator.ForServices,
-                             Registrator.ForEnterpriseLibrary));
-
             string extensionsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Extensions");
 
-            var composableControllerFactory = new ComposableControllerFactory(
-                new CompositionContainer(new DirectoryCatalog(extensionsPath)),
-                defaultFactoryMethod: unityControllerFactory.CreateController
-                );
+            var discoverableControllerFactory = new DiscoverableControllerFactory(
+                new CompositionContainer(
+                    new DirectoryCatalog(extensionsPath)));
 
-            ControllerBuilder.Current.SetControllerFactory(composableControllerFactory);
+            var unityControllerFactory = new UnityControllerFactory(
+                new UnityContainer() // No direct reference on the container outside this method.
+                    .Install(Registrator.ForControllers,
+                             Registrator.ForServices,
+                             Registrator.ForEnterpriseLibrary),
+                alternativeFactoryMethod: discoverableControllerFactory.CreateController);
+
+            ControllerBuilder.Current.SetControllerFactory(unityControllerFactory);
         }
 
         protected void Application_Start()

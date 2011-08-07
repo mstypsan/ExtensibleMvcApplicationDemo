@@ -9,10 +9,14 @@ namespace ExtensibleMvcApplication.Infrastructure.Unity
     internal sealed class UnityControllerFactory : DefaultControllerFactory
     {
         private readonly UnityContainer container;
+        private Func<RequestContext, string, IController> alternativeFactoryMethod;
 
-        public UnityControllerFactory(UnityContainer container)
+        public UnityControllerFactory(
+            UnityContainer container,
+            Func<RequestContext, string, IController> alternativeFactoryMethod)
         {
             this.container = container;
+            this.alternativeFactoryMethod = alternativeFactoryMethod;
         }
 
         /// <summary>
@@ -38,7 +42,15 @@ namespace ExtensibleMvcApplication.Infrastructure.Unity
 
             if (controllerType == null)
             {
-                throw new HttpException(404, String.Format("The controller for path '{0}' could not be found or it does not implement IController.", requestContext.HttpContext.Request.Path));
+                try
+                {
+                    string controllerName = requestContext.HttpContext.Request.Path.Replace("/", "");
+                    return this.alternativeFactoryMethod(requestContext, controllerName);
+                }
+                catch
+                {
+                    throw new HttpException(404, String.Format("The controller for path '{0}' could not be found or it does not implement IController.", requestContext.HttpContext.Request.Path));
+                }
             }
 
             if (!typeof(IController).IsAssignableFrom(controllerType))

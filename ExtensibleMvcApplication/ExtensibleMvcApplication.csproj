@@ -68,7 +68,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Infrastructure\Composition\ComposableControllerFactory.cs" />
+    <Compile Include="Infrastructure\Composition\DiscoverableControllerFactory.cs" />
     <Compile Include="Infrastructure\Unity\Registrator.cs" />
     <Compile Include="Infrastructure\Unity\UnityControllerFactory.cs" />
     <Compile Include="Models\AccountModels.cs" />
